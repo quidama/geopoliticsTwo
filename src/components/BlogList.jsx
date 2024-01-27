@@ -5,6 +5,74 @@ import 'intersection-observer';
 import getDiscussionsByBlog from '@/services/getDiscussionByBlog';
 import BlogCard from './BlogCard';
 
+async function initialfetchBlogs(
+  tag,
+  lastAuthor,
+  lastPermlink,
+  blogStart,
+  setLoading,
+  setBlogs
+) {
+  try {
+    blogStart.current = true;
+    setLoading(true);
+    getDiscussionsByBlog({
+      tag: tag,
+      limit: 5,
+    }).then((result) => {
+      setBlogs(result);
+      const lastBlog = result[result.length - 1];
+      const { author, permlink } = lastBlog;
+
+      lastAuthor.current = author;
+      lastPermlink.current = permlink;
+    });
+  } catch (error) {
+    console.error('Error fetching blogs:', error);
+  } finally {
+    setLoading(false);
+    blogStart.current = false;
+  }
+}
+
+async function loadMoreBlogs(
+  tag,
+  lastAuthor,
+  lastPermlink,
+  oldPermlink,
+  showMore,
+  setBlogs
+) {
+  try {
+    getDiscussionsByBlog({
+      tag: tag,
+      start_author: lastAuthor.current,
+      start_permlink: lastPermlink.current,
+      limit: 5,
+    }).then((result) => {
+      const extendLastBlog = result[result.length - 1];
+      if (result.length > 1) {
+        const resultFirstBlog = result.shift();
+        if (oldPermlink.current !== extendLastBlog.permlink) {
+          setBlogs((prev) => [...prev, ...result]);
+          const lastBlog = result[result.length - 1];
+          const { author, permlink } = lastBlog;
+          lastAuthor.current = author;
+          lastPermlink.current = permlink;
+          showMore.current = true;
+          oldPermlink.current = permlink;
+        } else {
+          showMore.current = false;
+        }
+      } else {
+        alert('더이상의 Blog가 없습니다.');
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching posts:', error);
+  }
+}
+
 export default function BlogList({ tag, sectionTitle, sectionDescription }) {
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16,12 +84,32 @@ export default function BlogList({ tag, sectionTitle, sectionDescription }) {
   const targetRef = useRef(null);
   const blogStart = useRef(false);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const handleIntersect = ([entry]) => {
-    if (entry.isIntersecting) {
-      loadMoreBlogs();
-    }
-  };
+  useEffect(() => {
+    initialfetchBlogs(
+      tag,
+      lastAuthor,
+      lastPermlink,
+      blogStart,
+      setLoading,
+      setBlogs
+    );
+  }, [tag]);
+
+  const handleIntersect = useCallback(
+    ([entry]) => {
+      if (entry.isIntersecting) {
+        loadMoreBlogs(
+          tag,
+          lastAuthor,
+          lastPermlink,
+          oldPermlink,
+          showMore,
+          setBlogs
+        );
+      }
+    },
+    [tag]
+  );
 
   useEffect(() => {
     const observer = new IntersectionObserver(handleIntersect, {
@@ -38,65 +126,6 @@ export default function BlogList({ tag, sectionTitle, sectionDescription }) {
       observer.disconnect();
     };
   }, [handleIntersect]);
-
-  async function loadMoreBlogs() {
-    try {
-      getDiscussionsByBlog({
-        tag: tag,
-        start_author: lastAuthor.current,
-        start_permlink: lastPermlink.current,
-        limit: 5,
-      }).then((result) => {
-        const extendLastBlog = result[result.length - 1];
-        if (result.length > 1) {
-          const resultFirstBlog = result.shift();
-          if (oldPermlink.current !== extendLastBlog.permlink) {
-            setBlogs((prev) => [...prev, ...result]);
-            const lastBlog = result[result.length - 1];
-            const { author, permlink } = lastBlog;
-            lastAuthor.current = author;
-            lastPermlink.current = permlink;
-            showMore.current = true;
-            oldPermlink.current = permlink;
-          } else {
-            showMore.current = false;
-          }
-        } else {
-          alert('더이상의 Blog가 없습니다.');
-        }
-      });
-    } catch (error) {
-      console.error('Error fetching posts:', error);
-    }
-  }
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    initialfetchBlogs();
-  }, [tag]);
-
-  async function initialfetchBlogs() {
-    try {
-      blogStart.current = true;
-      setLoading(true);
-      getDiscussionsByBlog({
-        tag: tag,
-        limit: 5,
-      }).then((result) => {
-        setBlogs(result);
-        const lastBlog = result[result.length - 1];
-        const { author, permlink } = lastBlog;
-
-        lastAuthor.current = author;
-        lastPermlink.current = permlink;
-      });
-    } catch (error) {
-      console.error('Error fetching blogs:', error);
-    } finally {
-      setLoading(false);
-      blogStart.current = false;
-    }
-  }
 
   return (
     <section>
