@@ -18,10 +18,11 @@ export default function MarkDownViewer({ content }) {
               <SyntaxHighlighter
                 {...rest}
                 PreTag='div'
-                children={String(children).replace(/\n$/, '')}
                 language={match[1]}
                 style={materialDark}
-              />
+              >
+                {String(children).replace(/\n$/, '')}
+              </SyntaxHighlighter>
             ) : (
               <code className={className} {...rest}>
                 {children}

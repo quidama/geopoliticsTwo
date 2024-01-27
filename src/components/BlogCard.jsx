@@ -1,7 +1,4 @@
-export default function BlogCard({
-  blog: { title, created, body, author, json_metadata },
-  sectionTitle,
-}) {
+export default function BlogCard({ blog: { title, created, body }, sectionTitle }) {
   return (
     <article className='flex max-w-xl flex-col items-start justify-between overflow-hidden'>
       <div className='flex flex-row justify-between items-center text-xs'>

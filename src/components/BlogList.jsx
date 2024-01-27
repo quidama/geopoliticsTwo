@@ -16,15 +16,12 @@ export default function BlogList({ tag, sectionTitle, sectionDescription }) {
   const targetRef = useRef(null);
   const blogStart = useRef(false);
 
-  let i = 0;
-  const handleIntersect = useCallback(
-    ([entry]) => {
-      if (entry.isIntersecting) {
-        loadMoreBlogs();
-      }
-    },
-    [blogs]
-  );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const handleIntersect = ([entry]) => {
+    if (entry.isIntersecting) {
+      loadMoreBlogs();
+    }
+  };
 
   useEffect(() => {
     const observer = new IntersectionObserver(handleIntersect, {
@@ -42,7 +39,7 @@ export default function BlogList({ tag, sectionTitle, sectionDescription }) {
     };
   }, [handleIntersect]);
 
-  const loadMoreBlogs = async () => {
+  async function loadMoreBlogs() {
     try {
       getDiscussionsByBlog({
         tag: tag,
@@ -71,9 +68,14 @@ export default function BlogList({ tag, sectionTitle, sectionDescription }) {
     } catch (error) {
       console.error('Error fetching posts:', error);
     }
-  };
+  }
 
-  const initialfetchBlogs = async () => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    initialfetchBlogs();
+  }, [tag]);
+
+  async function initialfetchBlogs() {
     try {
       blogStart.current = true;
       setLoading(true);
@@ -94,11 +96,7 @@ export default function BlogList({ tag, sectionTitle, sectionDescription }) {
       setLoading(false);
       blogStart.current = false;
     }
-  };
-
-  useEffect(() => {
-    initialfetchBlogs();
-  }, []);
+  }
 
   return (
     <section>

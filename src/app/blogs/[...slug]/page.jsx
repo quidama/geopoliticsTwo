@@ -15,7 +15,6 @@ export default function BlogPage({ params: { slug } }) {
         setBlog(result);
       } catch (error) {
         console.error('블로그 내용을 불러오는 중 오류 발생:', error);
-        // 오류를 적절히 처리하십시오. 예를 들어 사용자에게 오류 메시지를 표시할 수 있습니다.
       }
     };
 
